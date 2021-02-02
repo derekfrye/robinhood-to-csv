@@ -27,6 +27,8 @@ parser.add_argument(
     '--profit', action='store_true', help='calculate profit for each sale')
 parser.add_argument(
     '--dividends', action='store_true', help='export dividend payments')
+parser.add_argument(
+    '--json-output', action='store_true', help='export as json instead of csv')
 args = parser.parse_args()
 username = args.username
 password = args.password
@@ -121,16 +123,44 @@ keys = sorted(keys)
 csv = ','.join(keys) + "\n"
 
 # CSV rows
-for row in fields:
-    for idx, key in enumerate(keys):
-        if (idx > 0):
-            csv += ","
-        try:
-            csv += str(fields[row][key])
-        except:
-            csv += ""
 
-    csv += "\n"
+if args.json_output:
+    csv = ""
+
+    for row in fields:
+        for idx, key in enumerate(keys):
+            if (idx > 0):
+                csv += ", "
+            elif (idx == 0):
+                csv += "{"
+            try:
+                csv_val = str(fields[row][key])
+                if csv_val[0 : 1] == "{":
+                    csv += "\"" + str(key) + "\": " + csv_val.replace("'","\"") 
+                else:
+                    csv += "\"" + str(key) + "\": \"" + csv_val.replace("'","\"") + "\""
+            except:
+                # probably the entry has no value
+                try: 
+                    csv += "\"" + str(key) + "\": \"\""
+                except:
+                    csv += ""
+
+        csv += "}\n"
+
+else: 
+    for row in fields:
+        for idx, key in enumerate(keys):
+            if (idx > 0):
+                csv += ","
+            elif (idx == 0):
+                csv += "{"
+            try:
+                csv += "\"" + str(fields[row][key]) + "\""
+            except:
+                csv += ""
+
+        csv += "}\n"
 
 # choose a filename to save to
 print("Choose a filename or press enter to save to `robinhood.csv`:")
